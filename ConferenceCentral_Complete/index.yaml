@@ -13,6 +13,11 @@ indexes:
 - kind: Conference
   properties:
   - name: city
+  - name: endDate
+
+- kind: Conference
+  properties:
+  - name: city
   - name: maxAttendees
   - name: month
   - name: name
@@ -94,3 +99,19 @@ indexes:
   properties:
   - name: topics
   - name: name
+
+- kind: Session
+  properties:
+  - name: typeOfSession
+  - name: startTime
+
+- kind: Session
+  ancestor: yes
+  properties:
+  - name: date
+  - name: startTime
+
+- kind: Session
+  ancestor: yes
+  properties:
+  - name: startTime

@@ -1,0 +1,21 @@
+"Although a StructuredProperty can be repeated and a StructuredProperty can contain another StructuredProperty, beware: if one structured property contains another, only one of them can be repeated. A work-around is to use LocalStructuredProperty, which does not have this constraint (but does not allow queries on its property values)."
+
+https://cloud.google.com/appengine/docs/python/ndb/properties
+
+
+Generating android client id.  To generate keystore:
+
+$ keytool -genkey -v -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000
+
+To get key SHA1 fingerprint:
+$ keytool -list -v -keystore debug.keystore -alias androiddebugkey -storepass android -keypass android
+
+https://coderwall.com/p/r09hoq/android-generate-release-debug-keystores
+
+
+couldn't figure out why task wasn't running.  Wasn't getting to handler function, just kept failing and retrying.  Deployed and finally got a meaningful error - "No handlers matched this URL."  Had to add following to app.yaml:
+- url: /tasks/handle_featured_speaker
+  script: main.app
+
+  
+Getting "No endpoint found for path:" -- removed trailing / from path='session/query/date_city/' and it worked

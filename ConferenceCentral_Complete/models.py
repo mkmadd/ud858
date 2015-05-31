@@ -8,6 +8,10 @@ $Id: models.py,v 1.1 2014/05/24 22:01:10 wesc Exp $
 
 created/forked from conferences.py by wesc on 2014 may 24
 
+forked from udacity/ud858 by MKM on 2015 May 22
+
+Speaker and Session classes added by MKM
+
 """
 
 __author__ = 'wesc+api@google.com (Wesley Chun)'
@@ -21,13 +25,6 @@ class ConflictException(endpoints.ServiceException):
     """ConflictException -- exception mapped to HTTP 409 response"""
     http_status = httplib.CONFLICT
 
-class Profile(ndb.Model):
-    """Profile -- User profile object"""
-    displayName = ndb.StringProperty()
-    mainEmail = ndb.StringProperty()
-    teeShirtSize = ndb.StringProperty(default='NOT_SPECIFIED')
-    conferenceKeysToAttend = ndb.StringProperty(repeated=True)
-
 class ProfileMiniForm(messages.Message):
     """ProfileMiniForm -- update Profile form message"""
     displayName = messages.StringField(1)
@@ -39,6 +36,7 @@ class ProfileForm(messages.Message):
     mainEmail = messages.StringField(2)
     teeShirtSize = messages.EnumField('TeeShirtSize', 3)
     conferenceKeysToAttend = messages.StringField(4, repeated=True)
+    sessionWishlist = messages.StringField(5, repeated=True)    # MKM modified
 
 class StringMessage(messages.Message):
     """StringMessage-- outbound (single) string message"""
@@ -80,6 +78,64 @@ class ConferenceForms(messages.Message):
     """ConferenceForms -- multiple Conference outbound form message"""
     items = messages.MessageField(ConferenceForm, 1, repeated=True)
 
+class Speaker(ndb.Model):
+    """Speaker -- Speaker object; models speaker at a conference session"""
+    name        = ndb.StringProperty(required=True)
+    name_first  = ndb.StringProperty()
+    name_last   = ndb.StringProperty()
+    title       = ndb.StringProperty()
+    degrees     = ndb.StringProperty(repeated=True)
+    biography   = ndb.StringProperty()
+    institute   = ndb.StringProperty()
+
+class SpeakerForm(messages.Message):
+    """SpeakerForm -- Speaker outbound form message"""
+    name        = messages.StringField(1)
+    name_first  = messages.StringField(2)
+    name_last   = messages.StringField(3)
+    title       = messages.StringField(4)
+    degrees     = messages.StringField(5, repeated=True)
+    biography   = messages.StringField(6)
+    institute   = messages.StringField(7)
+    websafeKey  = messages.StringField(8)
+
+class SpeakerForms(messages.Message):
+    """SpeakerForms -- multiple Speaker outbound form messages"""
+    items = messages.MessageField(SpeakerForm, 1, repeated=True)
+
+class Session(ndb.Model):
+    """Session -- Session object; belongs to Conference"""
+    name            = ndb.StringProperty(required=True)
+    highlights      = ndb.StringProperty()
+    speaker         = ndb.KeyProperty(kind=Speaker, repeated=True)
+    duration        = ndb.IntegerProperty()   # int num of minutes: e.g. 15, 90
+    typeOfSession   = ndb.StringProperty(repeated=True)
+    date            = ndb.DateProperty()
+    startTime       = ndb.TimeProperty()
+
+class SessionForm(messages.Message):
+    """SessionForm -- Session outbound form message"""
+    name            = messages.StringField(1)
+    highlights      = messages.StringField(2)
+    speaker         = messages.StringField(3, repeated=True)
+    duration        = messages.IntegerField(4)
+    typeOfSession   = messages.StringField(5, repeated=True)
+    date            = messages.StringField(6)
+    startTime       = messages.StringField(7)
+    websafeKey      = messages.StringField(8)
+
+class SessionForms(messages.Message):
+    """SessionForms -- multiple Session outbound form message"""
+    items = messages.MessageField(SessionForm, 1, repeated=True)
+
+class Profile(ndb.Model):
+    """Profile -- User profile object"""
+    displayName = ndb.StringProperty()
+    mainEmail = ndb.StringProperty()
+    teeShirtSize = ndb.StringProperty(default='NOT_SPECIFIED')
+    conferenceKeysToAttend = ndb.StringProperty(repeated=True)
+    sessionWishlist = ndb.KeyProperty(kind=Session, repeated=True)
+
 class TeeShirtSize(messages.Enum):
     """TeeShirtSize -- t-shirt size enumeration value"""
     NOT_SPECIFIED = 1
@@ -107,4 +163,3 @@ class ConferenceQueryForm(messages.Message):
 class ConferenceQueryForms(messages.Message):
     """ConferenceQueryForms -- multiple ConferenceQueryForm inbound form message"""
     filters = messages.MessageField(ConferenceQueryForm, 1, repeated=True)
-

@@ -8,6 +8,8 @@ $Id$
 
 created by wesc on 2014 may 24
 
+forked from udacity/ud858 by MKM on 2015 May 22
+
 """
 
 __author__ = 'wesc+api@google.com (Wesley Chun)'
@@ -38,7 +40,19 @@ class SendConfirmationEmailHandler(webapp2.RequestHandler):
         )
 
 
+# added by MKM
+class MakeFeaturedSpeakerHandler(webapp2.RequestHandler):
+    def post(self):
+        """Set Featured Speaker Announcement in Memcache."""
+        ConferenceApi._handleFeaturedSpeaker(
+            self.request.get('websafeConferenceKey'), 
+            self.request.get('websafeSessionKey')
+        )
+        self.response.set_status(204)
+
+
 app = webapp2.WSGIApplication([
     ('/crons/set_announcement', SetAnnouncementHandler),
     ('/tasks/send_confirmation_email', SendConfirmationEmailHandler),
+    ('/tasks/handle_featured_speaker', MakeFeaturedSpeakerHandler),
 ], debug=True)
