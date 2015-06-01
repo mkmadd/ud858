@@ -74,47 +74,47 @@ There are several ways of handling this particular problem.
 
 1) Query on one property, then filter on the second using Python.  Fairly  
 straightforward.  One benefit of this method is that the second problem  
-can be handled easily and ALL workshops removed if desired.
-`		q = Session.query()
-        q = q.filter(Session.startTime < time(19, 0))
-        return SessionForms(
-            items=[self._copySessionToForm(s) for s in q
-                   if 'workshop' not in s.typeOfSession]
-        )`
+can be handled easily and ALL workshops removed if desired.  
+	q = Session.query()
+	q = q.filter(Session.startTime < time(19, 0))
+	return SessionForms(
+		items=[self._copySessionToForm(s) for s in q
+			   if 'workshop' not in s.typeOfSession]
+	)
 
 2) Make two separate queries, fetch only the keys, do a set intersection,  
 then get_multi() the result.  This leaves most of the work to the datastore  
-and is still fairly straightforward and doesn't mess with the models.
-`        q = Session.query(Session.typeOfSession!="lecture").fetch(keys_only=True)
-        r = Session.query(Session.startTime >= time(19, 0)).fetch(keys_only=True)
-        result_keys = set.intersection(set(q), set(r))
-        q = ndb.get_multi(result_keys)
-        return SessionForms(
-            items=[self._copySessionToForm(s) for s in q]
-        )`
+and is still fairly straightforward and doesn't mess with the models.  
+	q = Session.query(Session.typeOfSession!="lecture").fetch(keys_only=True)
+	r = Session.query(Session.startTime >= time(19, 0)).fetch(keys_only=True)
+	result_keys = set.intersection(set(q), set(r))
+	q = ndb.get_multi(result_keys)
+	return SessionForms(
+		items=[self._copySessionToForm(s) for s in q]
+	)
 
 3) Change the query.  A separate class could be constructed with all  
 session types in it.  Every time a session is created, its type is added  
 to the list of known session types.  To do the query, get the known list,  
-remove the unwanted type, then query using IN and one inequality.
-`        q = Session.query()
-        q = q.filter(Session.startTime < time(19, 0))
-        q = q.filter(Session.typeOfSession.IN(TYPES_MINUS_WORKSHOP))
-        return SessionForms(
-            items=[self._copySessionToForm(s) for s in q]
-        )`
+remove the unwanted type, then query using IN and one inequality.  
+	q = Session.query()
+	q = q.filter(Session.startTime < time(19, 0))
+	q = q.filter(Session.typeOfSession.IN(TYPES_MINUS_WORKSHOP))
+	return SessionForms(
+		items=[self._copySessionToForm(s) for s in q]
+	)
 
 4) Change the model.  If the types are enumerable, simply exchange the  
 typeOfSession repeated StringProperties for several BooleanProperties,  
 one for each type, then query with one equality and one inequality.  
 This method also fixes the minor issue of not being able to exclude  
-all workshops.
-`        q = Session.query()
-        q = q.filter(Session.startTime < time(19, 0))
-        q = q.filter(Session.workshop == False)
-        return SessionForms(
-            items=[self._copySessionToForm(s) for s in q]
-        )`
+all workshops.  
+    q = Session.query()
+    q = q.filter(Session.startTime < time(19, 0))
+    q = q.filter(Session.workshop == False)
+    return SessionForms(
+        items=[self._copySessionToForm(s) for s in q]
+    )
 
 I went with the second method.  I was unsure if the first method would scale  
 as well.  Though in a real system I might just go with the first, and only try  
@@ -122,7 +122,8 @@ something else if problems arose.  The feasibility of the third and fourth is
 going to depend on the specific query problem.  This particular query is  
 doable, though the fourth restricts types to predefined ones.
 
-getSessionsBeforeStartTimeNoType(type, startTime) -- returns all sessions  
+I implemented the dual-query/set-intersection method as:  
+* getSessionsBeforeStartTimeNoType(type, startTime) -- returns all sessions  
 not of the given type and with a startTime occurring before the given  
 startTime.
 
@@ -139,3 +140,36 @@ one talk.)
 The getFeaturedSpeaker() endpoint then retrieves the list of speaker keys for  
 a given conference from the memcache, then fetches all the speaker/session  
 names for each, constructs a message, and returns it.
+
+## How to Run
+
+Navigate to [conf-jeeves](https://conf-jeeves.appspot.com/_ah/api/explorer) and try out all the functions.  
+All the endpoint methods associated with conferences remain the same.  New  
+methods added are:  
+* createSpeaker(SpeakerForm) - create Speaker entities.  A name field  
+is required, the rest are optional.  A websafeKey is returned that  
+can be used in the speaker field of a new Session object.  
+* getSpeakers() - returns a list of all Speakers in the datastore.  
+* createSession(SessionForm, websafeConferenceKey) - create a session  
+as a child of given conference key.  (typeOfSession defaults to  
+'lecture' and duration defaults to 30 min.)  
+* getConferenceSessions(websafeConferenceKey) - get all sessions in  
+conference with given key.  
+* getConferenceSessionsByType(websafeConferenceKey, typeOfSession) -  
+get all sessions of given type in conference with given key.  
+* getSessionsBySpeaker(websafeSpeakerKey) - returns all sessions  
+presented by speaker with given key across all conferences.  
+* addSessionToWishlist(websafeSessionKey) - adds session with given  
+key to wishlist in user's profile, regardless of registration status.  
+Returns new wishlist.
+* getSessionsInWishlist() - returns all sessions in users wishlist.  
+* getSessionsByDateAndCity(date, city) - returns all sessions across  
+all conferences that occur in given city on given date
+* getSessionsWithStartTimesWithin(websafeConferenceKey, date, startTime,  
+window) - returns all sessions in conference with given key on given  
+date that have a startTime within number of minutes given by window.  
+* getSessionsBeforeStartTimeNoType(type, startTime) - return all  
+sessions that occur before given startTime not (solely) of given type.  
+* getFeaturedSpeaker(websafeConferenceKey) - returns announcement  
+string with names of featured speaker(s) and the sessions they are  
+presenting.

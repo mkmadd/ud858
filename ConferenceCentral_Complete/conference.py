@@ -409,7 +409,7 @@ class ConferenceApi(remote.Service):
         # check that conference exists
         if not conf:
             raise endpoints.NotFoundException('No conference found with ' \
-                        'key: {}'.format(request.websafeConferenceKey)
+                        'key: {}'.format(request.websafeConferenceKey))
 
         # check that user is owner of conference
         if user_id != conf.organizerUserId:
@@ -487,7 +487,7 @@ class ConferenceApi(remote.Service):
         conf = ndb.Key(urlsafe=request.websafeConferenceKey).get()
         if not conf:
             raise endpoints.NotFoundException('No conference found with ' \
-                        'key: {}').format(request.websafeConferenceKey)
+                        'key: {}'.format(request.websafeConferenceKey))
         
         # get all sessions with conf as parent
         sess = Session.query(ancestor=conf.key)
@@ -506,7 +506,7 @@ class ConferenceApi(remote.Service):
         c_key = ndb.Key(urlsafe=request.websafeConferenceKey)
         if not c_key:
             raise endpoints.NotFoundException('No conference found with ' \
-                        'key: {}').format(request.websafeConferenceKey)
+                        'key: {}'.format(request.websafeConferenceKey))
 
         # get all sessions with conf as parent and filter on type
         sess = Session.query(ancestor=c_key)
@@ -527,7 +527,7 @@ class ConferenceApi(remote.Service):
         s_key = ndb.Key(urlsafe=request.websafeSpeakerKey)
         if not s_key:
             raise endpoints.NotFoundException('No speaker found with ' \
-                        'key: {}').format(request.websafeSpeakerKey)
+                        'key: {}'.format(request.websafeSpeakerKey))
         
         # query for all sessions having that speaker key
         sess = Session.query(Session.speaker == s_key)
