@@ -76,21 +76,32 @@ There are several ways of handling this particular problem.
 straightforward.  One benefit of this method is that the second problem  
 can be handled easily and ALL workshops removed if desired.  
 `	q = Session.query()  
+
 	q = q.filter(Session.startTime < time(19, 0))  
+	
 	return SessionForms(  
+	
 		items=[self._copySessionToForm(s) for s in q \  
+		
 			   if 'workshop' not in s.typeOfSession]  
+			   
 	)`
 
 2) Make two separate queries, fetch only the keys, do a set intersection,  
 then get_multi() the result.  This leaves most of the work to the datastore  
 and is still fairly straightforward and doesn't mess with the models.  
 `	q = Session.query(Session.typeOfSession!="lecture").fetch(keys_only=True)  
+
 	r = Session.query(Session.startTime >= time(19, 0)).fetch(keys_only=True)  
+	
 	result_keys = set.intersection(set(q), set(r))  
+	
 	q = ndb.get_multi(result_keys)  
+	
 	return SessionForms(  
+	
 		items=[self._copySessionToForm(s) for s in q]  
+		
 	)`
 
 3) Change the query.  A separate class could be constructed with all  
@@ -98,10 +109,15 @@ session types in it.  Every time a session is created, its type is added
 to the list of known session types.  To do the query, get the known list,  
 remove the unwanted type, then query using IN and one inequality.  
 `	q = Session.query()  
+
 	q = q.filter(Session.startTime < time(19, 0))  
+	
 	q = q.filter(Session.typeOfSession.IN(TYPES_MINUS_WORKSHOP))  
+	
 	return SessionForms(  
+	
 		items=[self._copySessionToForm(s) for s in q]  
+		
 	)`
 
 4) Change the model.  If the types are enumerable, simply exchange the  
@@ -109,11 +125,16 @@ typeOfSession repeated StringProperties for several BooleanProperties,
 one for each type, then query with one equality and one inequality.  
 This method also fixes the minor issue of not being able to exclude  
 all workshops.  
-`    q = Session.query()  
-    q = q.filter(Session.startTime < time(19, 0))  
-    q = q.filter(Session.workshop == False)  
-    return SessionForms(  
-        items=[self._copySessionToForm(s) for s in q]  
+`    q = Session.query()
+
+    q = q.filter(Session.startTime < time(19, 0))
+	
+    q = q.filter(Session.workshop == False)
+	
+    return SessionForms(
+	
+        items=[self._copySessionToForm(s) for s in q]
+		
     )`
 
 I went with the second method.  I was unsure if the first method would scale  
@@ -143,7 +164,7 @@ names for each, constructs a message, and returns it.
 
 ## How to Run
 
-Navigate to [conf-jeeves](https://conf-jeeves.appspot.com/_ah/api/explorer) and try out all the functions.  
+Navigate to [conf-jeeves](https://conf-jeeves.appspot.com/_ah/api/explorer) and try out all the methods.  
 All the endpoint methods associated with conferences remain the same.  New  
 methods added are:  
 * createSpeaker(SpeakerForm) - create Speaker entities.  A name field  
